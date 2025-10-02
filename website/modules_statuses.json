@@ -1,0 +1,17 @@
+{
+    "PhoneAuth": true,
+    "Auth": true,
+    "Blog": true,
+    "Chat": true,
+    "Search": true,
+    "Admin": true,
+    "GeoAd": true,
+    "Ads": true,
+    "Ad": true,
+    "Analytics": true,
+    "Notification": true,
+    "Ratings": true,
+    "Payment": true,
+    "Media": true,
+    "UserMeta": true
+}

@@ -1,0 +1,11 @@
+{
+    "name": "UserMeta",
+    "alias": "usermeta",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\UserMeta\\Providers\\UserMetaServiceProvider"
+    ],
+    "files": []
+}
