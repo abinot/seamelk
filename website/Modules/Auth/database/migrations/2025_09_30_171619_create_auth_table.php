@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('auth', function (Blueprint $table) {
+        Schema::create('seamelk_auth_user_meta', function (Blueprint $table) {
             $table->id();
-            
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->unique(['key','value']);
+            $table->Text('key');
+            $table->longText('value')->nullable()->default('');
             $table->timestamps();
         });
     }
@@ -23,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('auth');
+        Schema::dropIfExists('seamelk_auth_user_meta');
     }
 };

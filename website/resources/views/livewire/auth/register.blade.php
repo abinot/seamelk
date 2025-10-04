@@ -2,41 +2,83 @@
 
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\Rules;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Modules\Auth\Models\AuthUserMeta;
 
 new #[Layout('components.layouts.auth')] class extends Component {
-    public string $name = '';
-    public string $email = '';
-    public string $password = '';
-    public string $password_confirmation = '';
+    public string $phone = '';
+    public string $national_id = '';
 
-    /**
-     * Handle an incoming registration request.
-     */
     public function register(): void
-    {
-        $validated = $this->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
-            'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
-        ]);
+{
+    $validated = $this->validate([
+        'phone' => ['required', 'regex:/^09\d{9}$/'],
+        'national_id' => ['required', 'digits:10'],
+    ]);
 
-        $validated['password'] = Hash::make($validated['password']);
-
-        event(new Registered(($user = User::create($validated))));
-
-        Auth::login($user);
-
-        Session::regenerate();
-
-        $this->redirectIntended(route('dashboard', absolute: false), navigate: true);
+    // بررسی وجود کد ملی در دیتابیس
+    $existingNational = User::where('email', $validated['national_id'] . '@seamelk.ir')->exists();
+    if ($existingNational) {
+        $this->addError('national_id', 'کد ملی وارد شده قبلاً ثبت شده است.');
+        return;
     }
-}; ?>
+
+    // بررسی اینکه شماره تلفن قبلاً در meta ثبت نشده باشد
+    $existingPhone = AuthUserMeta::where('key', 'phone')->where('value', $validated['phone'])->exists();
+    if ($existingPhone) {
+        $this->addError('phone', 'این شماره تلفن قبلاً ثبت شده است.');
+        return;
+    }
+
+    // ساخت رمز تصادفی 8 کاراکتری
+    $randomPassword = Str::random(10);
+
+    // ساخت کاربر
+    $user = User::create([
+        'name' => $validated['national_id'],
+        'email' => $validated['national_id'] . '@seamelk.ir',
+        'password' => Hash::make($randomPassword),
+    ]);
+
+    // ایمیل داخلی بر اساس user_id در meta
+    AuthUserMeta::create([
+        'user_id' => $user->id,
+        'key' => 'internal_email',
+        'value' => $user->id . '@seamelk.ir',
+    ]);
+
+    // ذخیره شماره تلفن و کد ملی در meta
+    AuthUserMeta::insert([
+        [
+            'user_id' => $user->id,
+            'key' => 'phone',
+            'value' => $validated['phone'],
+        ],
+        [
+            'user_id' => $user->id,
+            'key' => 'national_id',
+            'value' => $validated['national_id'],
+        ],
+    ]);
+
+    // ارسال رمز با SMS
+    // SmsService::send($validated['phone'], "رمز ورود شما: $randomPassword");
+
+    event(new Registered($user));
+
+    Auth::login($user);
+    Session::regenerate();
+    dd($randomPassword);
+    $this->redirectIntended(route('dashboard', absolute: false), navigate: true);
+}
+
+};
+?>
+
 
 <div class="flex flex-col gap-6">
     <x-auth-header :title="__('Create an account')" :description="__('Enter your details below to create your account')" />
@@ -44,55 +86,26 @@ new #[Layout('components.layouts.auth')] class extends Component {
     <!-- Session Status -->
     <x-auth-session-status class="text-center" :status="session('status')" />
 
-    <form method="POST" wire:submit="register" class="flex flex-col gap-6">
-        <!-- Name -->
+    <form wire:submit="register" class="flex flex-col gap-6">
         <flux:input
-            wire:model="name"
-            :label="__('Name')"
+            wire:model="phone"
+            label="شماره تلفن"
+            type="tel"
+            required
+            placeholder="09XX XXX XXXX"
+        />
+
+        <flux:input
+            wire:model="national_id"
+            label="کد ملی"
             type="text"
             required
-            autofocus
-            autocomplete="name"
-            :placeholder="__('Full name')"
+            placeholder="کد ملی ۱۰ رقمی"
         />
 
-        <!-- Email Address -->
-        <flux:input
-            wire:model="email"
-            :label="__('Email address')"
-            type="email"
-            required
-            autocomplete="email"
-            placeholder="email@example.com"
-        />
-
-        <!-- Password -->
-        <flux:input
-            wire:model="password"
-            :label="__('Password')"
-            type="password"
-            required
-            autocomplete="new-password"
-            :placeholder="__('Password')"
-            viewable
-        />
-
-        <!-- Confirm Password -->
-        <flux:input
-            wire:model="password_confirmation"
-            :label="__('Confirm password')"
-            type="password"
-            required
-            autocomplete="new-password"
-            :placeholder="__('Confirm password')"
-            viewable
-        />
-
-        <div class="flex items-center justify-end">
-            <flux:button type="submit" variant="primary" class="w-full" data-test="register-user-button">
-                {{ __('Create account') }}
-            </flux:button>
-        </div>
+        <flux:button type="submit" variant="primary" class="w-full">
+            ثبت‌نام
+        </flux:button>
     </form>
 
     <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-600 dark:text-zinc-400">
