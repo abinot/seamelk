@@ -83,14 +83,15 @@ new #[Layout('components.layouts.auth')] class extends Component
         <!-- Identifier -->
         <flux:input
             wire:model="identifier"
-            label="ایمیل یا شماره تلفن یا کدملی"
+            label="شماره تلفن"
             type="text"
             required
             autofocus
-            placeholder="ایمیل، شماره تلفن یا کدملی"
+            autocomplete="tel"
+            placeholder="09XX XXX XXXX"
         />
         @error('identifier') <div class="text-red-500 text-sm">{{ $message }}</div> @enderror
-
+<p>همچنین در صورتی که ایمیل یا کدملی خود را در سیستم ثبت کرده اید میتوانید از آن استفاده کنید</p>
         <!-- Password -->
         <flux:input
             wire:model="password"
@@ -98,9 +99,10 @@ new #[Layout('components.layouts.auth')] class extends Component
             type="password"
             required
             autocomplete="current-password"
-            placeholder="رمز عبور"
+            placeholder="********"
             viewable
         />
+        <p>میتوانید رمز ثابت یا رمزپویا خود را وارد کنید. همچنین برای دریافت رمزپویا دکمه دریافت رمزپویا کلیک کنید</p>
         @error('password') <div class="text-red-500 text-sm">{{ $message }}</div> @enderror
 
         <!-- Remember Me -->
@@ -111,6 +113,6 @@ new #[Layout('components.layouts.auth')] class extends Component
 
     <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-600 dark:text-zinc-400">
         <span>حساب کاربری ندارید؟</span>
-        <flux:link :href="route('register')" wire:navigate>ثبت‌نام</flux:link>
+        <flux:link :href="route('register')" wire:navigate>نام نویسی</flux:link>
     </div>
 </div>
