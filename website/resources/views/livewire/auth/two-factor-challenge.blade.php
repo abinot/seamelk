@@ -4,22 +4,22 @@
             class="relative w-full h-auto"
             x-cloak
             x-data="{
-                showRecoveryInput: @js($errors->has('recovery_code')),
+                showRecoveryInput: @js($errors->has("recovery_code")),
                 code: '',
                 recovery_code: '',
                 toggleInput() {
-                    this.showRecoveryInput = !this.showRecoveryInput;
+                    this.showRecoveryInput = ! this.showRecoveryInput
 
-                    this.code = '';
-                    this.recovery_code = '';
+                    this.code = ''
+                    this.recovery_code = ''
 
-                    $dispatch('clear-2fa-auth-code');
-            
+                    $dispatch('clear-2fa-auth-code')
+
                     $nextTick(() => {
                         this.showRecoveryInput
                             ? this.$refs.recovery_code?.focus()
-                            : $dispatch('focus-2fa-auth-code');
-                    });
+                            : $dispatch('focus-2fa-auth-code')
+                    })
                 },
             }"
         >
@@ -37,21 +37,16 @@
                 />
             </div>
 
-            <form method="POST" action="{{ route('two-factor.login.store') }}">
+            <form method="POST" action="{{ route("two-factor.login.store") }}">
                 @csrf
 
                 <div class="space-y-5 text-center">
                     <div x-show="!showRecoveryInput">
                         <div class="flex items-center justify-center my-5">
-                            <x-input-otp
-                                name="code"
-                                digits="6"
-                                autocomplete="one-time-code"
-                                x-model="code"
-                            />
+                            <x-input-otp name="code" digits="6" autocomplete="one-time-code" x-model="code" />
                         </div>
 
-                        @error('code')
+                        @error("code")
                             <flux:text color="red">
                                 {{ $message }}
                             </flux:text>
@@ -70,27 +65,27 @@
                             />
                         </div>
 
-                        @error('recovery_code')
+                        @error("recovery_code")
                             <flux:text color="red">
                                 {{ $message }}
                             </flux:text>
                         @enderror
                     </div>
 
-                    <flux:button
-                        variant="primary"
-                        type="submit"
-                        class="w-full"
-                    >
-                        {{ __('Continue') }}
+                    <flux:button variant="primary" type="submit" class="w-full">
+                        {{ __("Continue") }}
                     </flux:button>
                 </div>
 
                 <div class="mt-5 space-x-0.5 text-sm leading-5 text-center">
-                    <span class="opacity-50">{{ __('or you can') }}</span>
+                    <span class="opacity-50">{{ __("or you can") }}</span>
                     <div class="inline font-medium underline cursor-pointer opacity-80">
-                        <span x-show="!showRecoveryInput" @click="toggleInput()">{{ __('login using a recovery code') }}</span>
-                        <span x-show="showRecoveryInput" @click="toggleInput()">{{ __('login using an authentication code') }}</span>
+                        <span x-show="!showRecoveryInput" @click="toggleInput()">
+                            {{ __("login using a recovery code") }}
+                        </span>
+                        <span x-show="showRecoveryInput" @click="toggleInput()">
+                            {{ __("login using an authentication code") }}
+                        </span>
                     </div>
                 </div>
             </form>

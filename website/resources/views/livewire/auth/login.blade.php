@@ -10,15 +10,14 @@ use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
 use Modules\Auth\Models\AuthUserMeta;
 
-new #[Layout('components.layouts.auth')] class extends Component
-{
-    public string $identifier = ''; // ایمیل یا شماره تلفن یا کدملی
-    public string $password = '';
+new #[Layout("components.layouts.auth")] class extends Component {
+    public string $identifier = ""; // ایمیل یا شماره تلفن یا کدملی
+    public string $password = "";
     public bool $remember = false;
 
     protected array $rules = [
-        'identifier' => 'required|string',
-        'password' => 'required|string',
+        "identifier" => "required|string",
+        "password" => "required|string",
     ];
 
     public function login()
@@ -29,33 +28,35 @@ new #[Layout('components.layouts.auth')] class extends Component
         $email = null;
 
         // تشخیص نوع شناسه
-        if (str_contains($identifier, '@')) {
+        if (str_contains($identifier, "@")) {
             $email = $identifier;
         } elseif (preg_match('/^09\d{9}$/', $identifier)) {
-            $userId = AuthUserMeta::findUserIdByKeyValue('phone', $identifier);
-            if ($userId) $email = User::find($userId)?->email;
+            $userId = AuthUserMeta::findUserIdByKeyValue("phone", $identifier);
+            if ($userId) {
+                $email = User::find($userId)?->email;
+            }
         } elseif (preg_match('/^\d{10}$/', $identifier)) {
-            $email = $identifier . '@seamelk.ir';
+            $email = $identifier . "@seamelk.ir";
         } else {
-            $this->addError('identifier', 'فرمت شناسه پذیرفته‌شده نیست.');
+            $this->addError("identifier", "فرمت شناسه پذیرفته‌شده نیست.");
             return;
         }
 
         if (! $email) {
-            $this->addError('identifier', 'کاربری با این شناسه یافت نشد.');
+            $this->addError("identifier", "کاربری با این شناسه یافت نشد.");
             return;
         }
 
         // Rate limiter
         $this->ensureIsNotRateLimited($identifier);
 
-        if (Auth::attempt(['email' => $email, 'password' => $this->password], $this->remember)) {
+        if (Auth::attempt(["email" => $email, "password" => $this->password], $this->remember)) {
             session()->regenerate();
-            return redirect()->intended(route('dashboard'));
+            return redirect()->intended(route("dashboard"));
         }
 
         RateLimiter::hit($this->throttleKey($identifier));
-        $this->addError('password', 'شناسه یا رمز عبور اشتباه است.');
+        $this->addError("password", "شناسه یا رمز عبور اشتباه است.");
     }
 
     protected function ensureIsNotRateLimited(string $identifier)
@@ -63,23 +64,23 @@ new #[Layout('components.layouts.auth')] class extends Component
         if (RateLimiter::tooManyAttempts($this->throttleKey($identifier), 5)) {
             $seconds = RateLimiter::availableIn($this->throttleKey($identifier));
             throw ValidationException::withMessages([
-                'identifier' => __('auth.throttle', ['seconds' => $seconds, 'minutes' => ceil($seconds/60)]),
+                "identifier" => __("auth.throttle", ["seconds" => $seconds, "minutes" => ceil($seconds / 60)]),
             ]);
         }
     }
 
     protected function throttleKey(string $identifier): string
     {
-        return Str::lower($identifier).'|'.request()->ip();
+        return Str::lower($identifier) . "|" . request()->ip();
     }
 }; ?>
+
 <div class="flex flex-col gap-6">
-    <x-auth-header title="ورود به حساب کاربری" description="ایمیل، شماره تلفن یا کدملی و رمز عبور خود را وارد کنید"/>
+    <x-auth-header title="ورود به حساب کاربری" description="ایمیل، شماره تلفن یا کدملی و رمز عبور خود را وارد کنید" />
 
     <x-auth-session-status :status="session('status')" class="text-center" />
 
     <form wire:submit="login" class="flex flex-col gap-6">
-
         <!-- Identifier -->
         <flux:input
             wire:model="identifier"
@@ -90,8 +91,11 @@ new #[Layout('components.layouts.auth')] class extends Component
             autocomplete="tel"
             placeholder="09XX XXX XXXX"
         />
-        @error('identifier') <div class="text-red-500 text-sm">{{ $message }}</div> @enderror
-<p>همچنین در صورتی که ایمیل یا کدملی خود را در سیستم ثبت کرده اید میتوانید از آن استفاده کنید</p>
+        @error("identifier")
+            <div class="text-red-500 text-sm">{{ $message }}</div>
+        @enderror
+
+        <p>همچنین در صورتی که ایمیل یا کدملی خود را در سیستم ثبت کرده اید میتوانید از آن استفاده کنید</p>
         <!-- Password -->
         <flux:input
             wire:model="password"
@@ -103,10 +107,12 @@ new #[Layout('components.layouts.auth')] class extends Component
             viewable
         />
         <p>میتوانید رمز ثابت یا رمزپویا خود را وارد کنید. همچنین برای دریافت رمزپویا دکمه دریافت رمزپویا کلیک کنید</p>
-        @error('password') <div class="text-red-500 text-sm">{{ $message }}</div> @enderror
+        @error("password")
+            <div class="text-red-500 text-sm">{{ $message }}</div>
+        @enderror
 
         <!-- Remember Me -->
-        <flux:checkbox wire:model="remember" label="مرا به خاطر بسپار"/>
+        <flux:checkbox wire:model="remember" label="مرا به خاطر بسپار" />
 
         <flux:button type="submit" variant="primary" class="w-full">ورود</flux:button>
     </form>
