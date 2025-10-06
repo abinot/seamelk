@@ -1,124 +1,190 @@
 <?php
-
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
 use Modules\Auth\Models\AuthUserMeta;
+use Modules\Auth\Models\OTP;
 
 new #[Layout("components.layouts.auth")] class extends Component {
-    public string $identifier = ""; // ایمیل یا شماره تلفن یا کدملی
+    public string $identifier = ""; // ایمیل یا موبایل یا کدملی
     public string $password = "";
-    public bool $remember = false;
+    public string $otp = "";
+    public bool $otpSent = false;
+    public bool $useOtp = false; // تعیین می‌کنه ورود با OTP باشه یا رمز ثابت
 
-    protected array $rules = [
-        "identifier" => "required|string",
-        "password" => "required|string",
-    ];
-
-    public function login()
+    // مرحله ۱: ارسال OTP
+    public function sendOtp(): void
     {
-        $this->validate();
+        $this->validate([
+            "identifier" => ["required"],
+        ]);
 
-        $identifier = trim($this->identifier);
-        $email = null;
+        $phone = $this->normalizePhone($this->identifier);
 
-        // تشخیص نوع شناسه
-        if (str_contains($identifier, "@")) {
-            $email = $identifier;
-        } elseif (preg_match('/^09\d{9}$/', $identifier)) {
-            $userId = AuthUserMeta::findUserIdByKeyValue("phone", $identifier);
-            if ($userId) {
-                $email = User::find($userId)?->email;
-            }
-        } elseif (preg_match('/^\d{10}$/', $identifier)) {
-            $email = $identifier . "@seamelk.ir";
-        } else {
-            $this->addError("identifier", "فرمت شناسه پذیرفته‌شده نیست.");
+        if (! $phone) {
+            $this->addError("identifier", "شناسه معتبر نیست.");
             return;
         }
 
-        if (! $email) {
-            $this->addError("identifier", "کاربری با این شناسه یافت نشد.");
-            return;
-        }
+        // بررسی وجود کاربر
+        $userId = AuthUserMeta::findUserIdByKeyValue("phone", $phone);
+        $exists = $userId !== null;
 
-        // Rate limiter
-        $this->ensureIsNotRateLimited($identifier);
+        // تولید OTP
+        $otp = (string) rand(100000, 999999);
 
-        if (Auth::attempt(["email" => $email, "password" => $this->password], $this->remember)) {
-            session()->regenerate();
-            return redirect()->intended(route("dashboard"));
-        }
+        OTP::updateOrCreate(
+            ["phone" => $phone],
+            ["otp" => $otp, "expires_at" => now()->addMinutes(2)]
+        );
 
-        RateLimiter::hit($this->throttleKey($identifier));
-        $this->addError("password", "شناسه یا رمز عبور اشتباه است.");
+        $this->otpSent = true;
+        $this->useOtp = true;
+
+        session()->flash("status", "کد تایید شما: $otp");
+
+        // اگر کاربر وجود نداشت → در مرحله verifyOtp ثبت‌نام می‌کنیم
     }
 
-    protected function ensureIsNotRateLimited(string $identifier)
+    // مرحله ۲: بررسی OTP
+    public function verifyOtp(): void
     {
-        if (RateLimiter::tooManyAttempts($this->throttleKey($identifier), 5)) {
-            $seconds = RateLimiter::availableIn($this->throttleKey($identifier));
-            throw ValidationException::withMessages([
-                "identifier" => __("auth.throttle", ["seconds" => $seconds, "minutes" => ceil($seconds / 60)]),
+        $phone = $this->normalizePhone($this->identifier);
+
+        $record = OTP::where("phone", $phone)
+            ->where("otp", (string) $this->otp)
+            ->where("expires_at", ">", now())
+            ->first();
+
+        if (! $record) {
+            $this->addError("otp", "کد وارد شده صحیح یا منقضی شده است.");
+            return;
+        }
+
+        // پیدا کردن یا ساخت کاربر
+        $userId = AuthUserMeta::findUserIdByKeyValue("phone", $phone);
+        if ($userId) {
+            $user = User::find($userId);
+        } else {
+            $randomPassword = Str::random(8);
+            $user = User::create([
+                "name" => $phone,
+                "email" => "user{$phone}@seamelk.ir",
+                "password" => Hash::make($randomPassword),
+            ]);
+            $user->update(["email" => $user->id . "@seamelk.ir"]);
+
+            AuthUserMeta::create([
+                "user_id" => $user->id,
+                "key" => "phone",
+                "value" => $phone,
             ]);
         }
+
+        $record->delete();
+
+        Auth::login($user);
+        session()->regenerate();
+
+        $this->redirectIntended(route("dashboard", absolute: false), navigate: true);
     }
 
-    protected function throttleKey(string $identifier): string
+    // ورود با رمز ثابت
+    public function loginWithPassword(): void
     {
-        return Str::lower($identifier) . "|" . request()->ip();
-    }
-}; ?>
+        $this->validate([
+            "identifier" => "required|string",
+            "password" => "required|string",
+        ]);
 
-<div class="flex flex-col gap-6">
-    <x-auth-header title="ورود به حساب کاربری" description="ایمیل، شماره تلفن یا کدملی و رمز عبور خود را وارد کنید" />
+        $email = $this->resolveEmail($this->identifier);
+
+        if ($email && Auth::attempt(["email" => $email, "password" => $this->password], true)) {
+            session()->regenerate();
+            $this->redirectIntended(route("dashboard", absolute: false), navigate: true);
+        } else {
+            $this->addError("password", "شناسه یا رمز عبور اشتباه است.");
+        }
+    }
+
+    private function normalizePhone(string $input): ?string
+    {
+        return preg_match('/^09\d{9}$/', $input) ? $input : null;
+    }
+
+    private function resolveEmail(string $identifier): ?string
+    {
+        if (str_contains($identifier, "@")) return $identifier;
+        if (preg_match('/^09\d{9}$/', $identifier)) {
+            $userId = AuthUserMeta::findUserIdByKeyValue("phone", $identifier);
+            return $userId ? User::find($userId)?->email : null;
+        }
+        if (preg_match('/^\d{10}$/', $identifier)) return $identifier . "@seamelk.ir";
+        return null;
+    }
+};
+?>
+<div>
+    <x-auth-header title="ورود / ثبت‌نام" description="با رمز ثابت یا رمز پویا وارد شوید" />
 
     <x-auth-session-status :status="session('status')" class="text-center" />
 
-    <form wire:submit="login" class="flex flex-col gap-6">
-        <!-- Identifier -->
-        <flux:input
-            wire:model="identifier"
-            label="شماره تلفن"
-            type="text"
-            required
-            autofocus
-            autocomplete="tel"
-            placeholder="09XX XXX XXXX"
-        />
-        @error("identifier")
-            <div class="text-red-500 text-sm">{{ $message }}</div>
-        @enderror
+    @if(!$otpSent)
+        {{-- حالت ورود با رمز ثابت --}}
+        <form wire:submit="loginWithPassword" class="flex flex-col gap-6">
+            <flux:input wire:model="identifier" label="شماره تلفن" required />
 
-        <p>همچنین در صورتی که ایمیل یا کدملی خود را در سیستم ثبت کرده اید میتوانید از آن استفاده کنید</p>
-        <!-- Password -->
-        <flux:input
-            wire:model="password"
-            label="رمز عبور"
-            type="password"
-            required
-            autocomplete="current-password"
-            placeholder="********"
-            viewable
-        />
-        <p>میتوانید رمز ثابت یا رمزپویا خود را وارد کنید. همچنین برای دریافت رمزپویا دکمه دریافت رمزپویا کلیک کنید</p>
-        @error("password")
-            <div class="text-red-500 text-sm">{{ $message }}</div>
-        @enderror
+            <div class="flex gap-2 items-end">
+                <flux:input
+                    wire:model="password"
+                    label="رمز عبور"
+                    type="password"
+                    required
+                    class="flex-1"
+                />
 
-        <!-- Remember Me -->
-        <flux:checkbox wire:model="remember" label="مرا به خاطر بسپار" />
+                <flux:button
+                    type="button"
+                    wire:click="sendOtp"
+                    variant="primary"
+                    class="px-4 py-2"
+                >
+                    دریافت رمز پویا
+                </flux:button>
+            </div>
 
-        <flux:button type="submit" variant="primary" class="w-full">ورود</flux:button>
-    </form>
+            <flux:button type="submit" variant="primary" class="w-full">
+                ورود
+            </flux:button>
+        </form>
 
-    <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-600 dark:text-zinc-400">
-        <span>حساب کاربری ندارید؟</span>
-        <flux:link :href="route('register')" wire:navigate>نام نویسی</flux:link>
-    </div>
+
+
+    @else
+        {{-- حالت ورود/ثبت‌نام با OTP --}}
+        <form wire:submit="verifyOtp" class="flex flex-col gap-6">
+            <flux:input wire:model="identifier" label="شماره تلفن" readonly />
+
+            <div class="flex gap-2 items-end">
+                <flux:input wire:model="otp" label="کد تایید" required />
+
+
+                <flux:button
+                    type="button"
+                    disabled
+                    variant="primary"
+                    class="px-4 py-2"
+                >
+                    دریافت رمز پویا
+                </flux:button>
+            </div>
+
+
+            <flux:button type="submit" variant="primary" class="w-full">تایید</flux:button>
+        </form>
+    @endif
 </div>

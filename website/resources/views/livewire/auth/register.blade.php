@@ -83,11 +83,24 @@ new #[Layout("components.layouts.auth")] class extends Component {
         $user->update(["email" => $user->id . "@seamelk.ir"]);
 
         // ذخیره متاها
-        AuthUserMeta::insert([
-            ["user_id" => $user->id, "key" => "internal_email", "value" => $user->id . "@seamelk.ir"],
-            ["user_id" => $user->id, "key" => "phone", "value" => $this->phone],
-            ["user_id" => $user->id, "key" => "first_password", "value" => $randomPassword],
+        AuthUserMeta::create([
+            "user_id" => $user->id,
+            "key"     => "internal_email",
+            "value"   => $user->id . "@seamelk.ir",
         ]);
+
+        AuthUserMeta::create([
+            "user_id" => $user->id,
+            "key"     => "phone",
+            "value"   => $this->phone,
+        ]);
+
+        AuthUserMeta::create([
+            "user_id" => $user->id,
+            "key"     => "first_password",
+            "value"   => $randomPassword,
+        ]);
+
         session()->flash("status", "رمز  شما: $randomPassword");
         dd($randomPassword);
         // حذف OTP بعد از استفاده
