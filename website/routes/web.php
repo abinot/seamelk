@@ -12,8 +12,13 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+Volt::route('admin/dashboard', 'admin.dashboard')
+    ->middleware(['auth', 'admin'])
+    ->name('admin.dashboard');
+
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
+
 
     Volt::route('settings/profile', 'settings.profile')->name('profile.edit');
     Volt::route('settings/password', 'settings.password')->name('password.edit');

@@ -33,19 +33,30 @@ new #[Layout("components.layouts.auth")] class extends Component {
         // بررسی وجود کاربر
         $userId = AuthUserMeta::findUserIdByKeyValue("phone", $phone);
         $exists = $userId !== null;
+        $record = OTP::where("phone", $phone)
+        ->where("expires_at", ">", now())
+        ->first();
 
-        // تولید OTP
+        if (! $record) {
         $otp = (string) rand(100000, 999999);
 
         OTP::updateOrCreate(
             ["phone" => $phone],
-            ["otp" => $otp, "expires_at" => now()->addMinutes(2)]
+            ["otp" => $otp, "expires_at" => now()->addMinutes(5)]
         );
-
         $this->otpSent = true;
         $this->useOtp = true;
 
         session()->flash("status", "کد تایید شما: $otp");
+        }else{
+            $this->otpSent = false;
+            $this->useOtp = true;
+            session()->flash("status","کد به تازگی فرستاده شده است.");
+        }
+        // تولید OTP
+
+
+
 
         // اگر کاربر وجود نداشت → در مرحله verifyOtp ثبت‌نام می‌کنیم
     }
@@ -56,9 +67,9 @@ new #[Layout("components.layouts.auth")] class extends Component {
         $phone = $this->normalizePhone($this->identifier);
 
         $record = OTP::where("phone", $phone)
-            ->where("otp", (string) $this->otp)
-            ->where("expires_at", ">", now())
-            ->first();
+        ->where("otp", (string) $this->otp)
+        ->where("expires_at", ">", now())
+        ->first();
 
         if (! $record) {
             $this->addError("otp", "کد وارد شده صحیح یا منقضی شده است.");
@@ -70,7 +81,7 @@ new #[Layout("components.layouts.auth")] class extends Component {
         if ($userId) {
             $user = User::find($userId);
         } else {
-            $randomPassword = Str::random(8);
+            $randomPassword = Str::random(17);
             $user = User::create([
                 "name" => $phone,
                 "email" => "user{$phone}@seamelk.ir",
@@ -83,6 +94,18 @@ new #[Layout("components.layouts.auth")] class extends Component {
                 "key" => "phone",
                 "value" => $phone,
             ]);
+
+            // بررسی مطابقت شماره تلفن با ADMIN_PHONE و اختصاص نقش مدیر
+            $adminPhone = env('ADMIN_PHONE');
+            if ($adminPhone && $phone === $adminPhone) {
+                $user->assignRole('admin'); // فرض بر این است که نقش 'admin' قبلاً ایجاد شده است
+            }else{
+                if($adminPhone){
+                    $user->assignRole('user');
+                }else{
+                    echo("the ADMIN_PHONE not set on env. if you dont set ADMIN_PHONE the system can't found the Admin of the Seamelk");
+                }
+            }
         }
 
         $record->delete();
@@ -92,6 +115,7 @@ new #[Layout("components.layouts.auth")] class extends Component {
 
         $this->redirectIntended(route("dashboard", absolute: false), navigate: true);
     }
+
 
     // ورود با رمز ثابت
     public function loginWithPassword(): void
@@ -133,7 +157,7 @@ new #[Layout("components.layouts.auth")] class extends Component {
 
     <x-auth-session-status :status="session('status')" class="text-center" />
 
-    @if(!$otpSent)
+    @if(!$useOtp)
         {{-- حالت ورود با رمز ثابت --}}
         <form wire:submit="loginWithPassword" class="flex flex-col gap-6">
             <flux:input wire:model="identifier" label="شماره تلفن" required />
@@ -141,7 +165,7 @@ new #[Layout("components.layouts.auth")] class extends Component {
             <div class="flex gap-2 items-end">
                 <flux:input
                     wire:model="password"
-                    label="رمز عبور"
+                    label=" رمز  عبور ثابت"
                     type="password"
                     required
                     class="flex-1"
@@ -153,9 +177,10 @@ new #[Layout("components.layouts.auth")] class extends Component {
                     variant="primary"
                     class="px-4 py-2"
                 >
-                    دریافت رمز پویا
+                    ورود با رمز پویا
                 </flux:button>
             </div>
+            <p class="text-sm"> برای ورود با کد تایید و تلفن همراه روی گزینه بالا کلیک کنید </p>
 
             <flux:button type="submit" variant="primary" class="w-full">
                 ورود
@@ -179,9 +204,10 @@ new #[Layout("components.layouts.auth")] class extends Component {
                     variant="primary"
                     class="px-4 py-2"
                 >
-                    دریافت رمز پویا
+                   رمز پویا ارسال شد
                 </flux:button>
             </div>
+            <p> اعتبار تا ۵ دقیقه است </p>
 
 
             <flux:button type="submit" variant="primary" class="w-full">تایید</flux:button>

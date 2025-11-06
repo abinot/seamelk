@@ -9,6 +9,7 @@ use Livewire\Volt\Component;
 new class extends Component {
     public string $name = "";
     public string $email = "";
+    public bool $CanChangeEmail = False;
 
     /**
      * Mount the component.
@@ -26,6 +27,7 @@ new class extends Component {
     {
         $user = Auth::user();
 
+        if ($this->CanChangeEmail){
         $validated = $this->validate([
             "name" => ["required", "string", "max:255"],
 
@@ -38,6 +40,13 @@ new class extends Component {
                 Rule::unique(User::class)->ignore($user->id),
             ],
         ]);
+    }else{
+                $validated = $this->validate([
+            "name" => ["required", "string", "max:255"],
+
+
+        ]);
+    }
 
         $user->fill($validated);
 
@@ -76,6 +85,7 @@ new class extends Component {
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
             <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
 
+            @if ($CanChangeEmail)
             <div>
                 <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
 
@@ -100,6 +110,7 @@ new class extends Component {
                     </div>
                 @endif
             </div>
+            @endif
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">
