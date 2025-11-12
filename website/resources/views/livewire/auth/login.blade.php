@@ -98,7 +98,7 @@ new #[Layout("components.layouts.auth")] class extends Component {
             // بررسی مطابقت شماره تلفن با ADMIN_PHONE و اختصاص نقش مدیر
             $adminPhone = env('ADMIN_PHONE');
             if ($adminPhone && $phone === $adminPhone) {
-                $user->assignRole('admin'); // فرض بر این است که نقش 'admin' قبلاً ایجاد شده است
+                $user->assignRole('super_admin'); // فرض بر این است که نقش 'admin' قبلاً ایجاد شده است
             }else{
                 if($adminPhone){
                     $user->assignRole('user');

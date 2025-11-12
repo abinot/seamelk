@@ -3,9 +3,17 @@
         $user = auth()->user();
     @endphp
 
-    @if($user && $user->hasRole('admin'))
+
+
+
+    @hasanyrole('admin|super_admin')
         
-        <livewire:users-table />
+<div class="space-y-32">
+    <livewire:users-table />
+    <livewire:role-managment />
+</div>
+
+
     @else
         {{-- اگر ادمین نبود --}}
         <div class="flex h-full w-full flex-1 flex-col gap-4 rounded-xl">
@@ -44,5 +52,5 @@
                 <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
             </div>
         </div>
-    @endif
+    @endhasanyrole
 </x-layouts.app>

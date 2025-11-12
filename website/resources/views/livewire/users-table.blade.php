@@ -28,17 +28,10 @@
                 <td>{{ $user->id }}</td>
                 <td>{{ $user->name }}</td>
                 <td>{{ $user->email }}</td>
-                <td>{{ jdate($user->created_at)->format('Y/m/d') }}</td>
+                <td>{{ jdate($user->created_at)->format('Y/m/d H:i:s') }}</td>
                 <td>
                         @foreach ($user->roles as $role)
-                            <span 
-                                class="role-badge" 
-                                data-name="{{ $role->name }}" 
-                                data-created="{{ jdate($role->created_at)->format('Y/m/d H:i') }}"
-                                data-updated="{{ jdate($role->updated_at)->format('Y/m/d H:i') }}"
-                               >
-                                {{ $role->name }}
-                            </span>
+                                - {{ $role->name }} -
                         @endforeach
                     </td>
 
@@ -49,8 +42,8 @@
         </tbody>
         <!-- Modal ساده -->
 <div id="roleModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-     background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
-  <div style="background:gray; padding:20px; border-radius:12px; min-width:300px; text-align:center;">
+     background:rgba(0,0,0,0.4); align-items:center; z-index:999; justify-content:center;">
+  <div style="background:rgb(35,35,35); padding:20px; border-radius:12px; min-width:300px; text-align:center;">
       <h3 id="roleName" style="font-size:18px; margin-bottom:10px;"></h3>
       <p><strong>تاریخ ایجاد:</strong> <span id="roleCreated"></span></p>
       <p><strong>آخرین تغییر:</strong> <span id="roleUpdated"></span></p>
