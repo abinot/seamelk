@@ -35,5 +35,16 @@ Route::middleware(['auth'])->group(function () {
     //     )
     //     ->name('two-factor.show');
 });
+use App\Http\Livewire\UserMetaManager;
+
+Route::middleware(['auth'])->group(function () {
+    Route::view('/user-metas', 'user-metas')->name('user.metas');
+});
+
+
+
+use App\Http\Controllers\ProfileController;
+
+Route::get('/@{username}', [ProfileController::class, 'show']);
 
 require __DIR__.'/auth.php';

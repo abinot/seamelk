@@ -11,12 +11,15 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions; 
-
+use Modules\RealEstate\Traits\HasRealEstate;
+use Modules\Blog\Traits\HasPosts;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
     use HasRoles;
+    use HasRealEstate;
+    use HasPosts;
     use LogsActivity;
 
     protected static $logAttributes = ['name', 'email'];
@@ -80,6 +83,13 @@ class User extends Authenticatable
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+    // app/Models/User.php
+
+public function metas()
+{
+    return $this->hasMany(UserMeta::class);
+}
+
 
 
 

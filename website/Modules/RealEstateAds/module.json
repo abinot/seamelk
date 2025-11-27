@@ -1,0 +1,11 @@
+{
+    "name": "RealEstateAds",
+    "alias": "realestateads",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\RealEstateAds\\Providers\\RealEstateAdsServiceProvider"
+    ],
+    "files": []
+}

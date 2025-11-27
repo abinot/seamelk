@@ -1,17 +1,10 @@
 {
-    "PhoneAuth": true,
     "Auth": true,
-    "Blog": true,
-    "Chat": true,
-    "Search": true,
+    "User": true,
     "Admin": true,
-    "GeoAd": true,
-    "Ads": true,
-    "Ad": true,
-    "Analytics": true,
-    "Notification": true,
-    "Ratings": true,
-    "Payment": true,
-    "Media": true,
-    "UserMeta": true
+    "Estate": true,
+    "EstateAd": true,
+    "Blog": true,
+    "RealEstate": true,
+    "RealEstateAds": true
 }
