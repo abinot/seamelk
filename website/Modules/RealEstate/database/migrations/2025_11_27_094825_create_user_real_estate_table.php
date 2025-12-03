@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('user_real_estate', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('real_state_id')->constrained('real_state')->onDelete('cascade');
+            $table->foreignId('real_estate_id')->constrained('real_estate')->onDelete('cascade');
             $table->string('role'); // owner, phone_agent, presenter
             $table->timestamps();
         });

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace("_", "-", app()->getLocale()) }}" class="dark">
+<html lang="fa" class="dark" dir="rtl">
     <head>
         @include("partials.head")
     </head>
@@ -18,5 +18,6 @@
             </div>
         </div>
         @fluxScripts
+         <script src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
     </body>
 </html>

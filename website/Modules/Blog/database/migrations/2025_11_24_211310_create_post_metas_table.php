@@ -13,10 +13,20 @@ return new class extends Migration
     {
         Schema::create('post_metas', function (Blueprint $table) {
             $table->id();
-            $table->string("meta_key")->index();
+            $table->foreignId('user_id')->constrained();
+            $table->string('meta_key', 100)->index();
+            $table->string('meta_type', 100)->nullable();
+            $table->longText('meta_value')->nullable();
+            $table->timestamp('verified_at')->nullable();
+            $table->softDeletes();
+            $table->boolean('is_active')->default(True);
+            $table->json('show');
+            $table->string('delete_type')->default('none'); // onDeleteCascade - User Delete - Admin Delete - System Delete
+            $table->longText('meta_note')->default('')->nullable();
             $table->foreignId('post_id')->constrained('posts')->onDelete('cascade')->index();
-            $table->longText("meta_value");
-            $table->longText("meta_note");
+
+
+
             $table->timestamps();
         });
     }

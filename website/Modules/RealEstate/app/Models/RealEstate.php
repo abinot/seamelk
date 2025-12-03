@@ -3,54 +3,68 @@
 namespace Modules\RealEstate\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\RealEstate\Database\Factories\RealEstateFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RealEstate extends Model
 {
-    use HasFactory;
-
-    /**
-     * The attributes that are mass assignable.
-     */
-
-    // protected static function newFactory(): RealEstateFactory
-    // {
-    //     // return RealEstateFactory::new();
-    // }
-        protected $table = 'real_state';
+    use SoftDeletes;
 
     protected $fillable = [
-        'title','slug','content','excerpt','status',
-        'thumbnail_url','banner_url','views_count','comments_count',
-        'likes_count','rating_average','rating_count','seo_title',
-        'seo_description','seo_keywords','keyword','category_id','tags',
-        'deal_type','price','mortgage_price','rent_price','area','land_area',
-        'build_year','dimensions','bedrooms','street_width','address_text',
-        'address_location','parking','unit','elevator','storage',
-        'document_type','balcony','renovated','custom_css','custom_js'
+        'name',
+        'type',
+        'code',
+        'address',
+        'location',
+        'owner_id',
+        'since_date',
+        'description',
+        'seo_title',
+        'seo_description',
+        'seo_keywords',
+        'custom_css',
+        'custom_js',
+        'profile_picture_url',
+        'thumbnail_url',
+        'banner_url',
+        'slug',
+        'views_count',
+        'comments_count',
+        'likes_count',
+        'rating_average',
+        'rating_count',
+        'home_posts_count',
+        'all_posts_count',
+        'ads_posts_count',
+        'customers_count',
+        'workers_count',
+        'is_active',
+        'verified_at',
     ];
 
-    protected $casts = [
-        'views_count' => 'integer',
-        'comments_count' => 'integer',
-        'likes_count' => 'integer',
-        'rating_average' => 'float',
-        'rating_count' => 'integer',
-        'parking' => 'boolean',
-        'elevator' => 'boolean',
-        'storage' => 'boolean',
-        'balcony' => 'boolean',
-        'renovated' => 'boolean',
+    // اگر میخوای همه چیز قابل mass-assignment باشه، می‌تونی guarded خالی بذاری
+    protected $guarded = [];
+
+    // نوع داده‌های timestamp
+    protected $dates = [
+        'since_date',
+        'verified_at',
+        'created_at',
+        'updated_at',
+        'deleted_at',
     ];
 
-    public function metas() {
-        return $this->hasMany(RealStateMeta::class, 'real_state_id');
+
+
+
+    // صاحب اصلی
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
     }
 
-    public function users() {
-        return $this->belongsToMany(\App\Models\User::class, 'user_real_state')
-                    ->withPivot('role')
-                    ->withTimestamps();
+    // متاها
+    public function metas()
+    {
+        return $this->hasMany(RealEstateMeta::class);
     }
 }

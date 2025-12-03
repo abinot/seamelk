@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('slug')->unique()->index();
             $table->unsignedBigInteger('parent_id')->nullable()->index(); // برای دسته‌بندی درختی
             $table->timestamps();
+            $table->softDeletes();
         });
 
     }

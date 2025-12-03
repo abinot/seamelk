@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade')->index();
             $table->string('role')->default('author'); // مثلا نقش کاربر در پست
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

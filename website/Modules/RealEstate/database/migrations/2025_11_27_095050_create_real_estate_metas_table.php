@@ -13,12 +13,26 @@ return new class extends Migration
     {
         Schema::create('real_estate_metas', function (Blueprint $table) {
             $table->id();
-            $table->string("meta_key")->index();
-            $table->foreignId('real_state_id')->constrained('real_state')->onDelete('cascade')->index();
-            $table->longText("meta_value");
-            $table->longText("meta_note")->nullable();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('real_estate_id')->constrained('real_estate')->cascadeOnDelete();
+            
+            $table->string('meta_key', 100)->index(); // مثال: phone_number
+            $table->string('meta_type', 50)->nullable(); // نوع داده: string, integer, boolean
+            $table->string('meta_name', 100)->nullable(); // مثال: شماره تلفن
+            $table->integer('meta_count_number')->nullable(); // برای مشخص کردن چندتا مقدار
+            $table->timestamp('verified_at')->nullable();
+
+            $table->longText('meta_value')->nullable(); // مقدار اصلی
+            $table->string('meta_value2')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->json('show')->nullable();
+            $table->string('delete_type')->default('none');
+            $table->longText('meta_note')->nullable();
+            
+            $table->softDeletes();
             $table->timestamps();
         });
+
     }
 
     /**

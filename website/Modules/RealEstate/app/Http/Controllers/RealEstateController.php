@@ -33,7 +33,9 @@ class RealEstateController extends Controller
      */
     public function show($id)
     {
-        return view('realestate::show');
+        return view('realestate::show',[
+            'real_estate_id' => $id,
+        ]);
     }
 
     /**

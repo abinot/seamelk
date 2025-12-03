@@ -18,15 +18,16 @@ return new class extends Migration
             $table->string('meta_type', 100)->nullable();
             $table->longText('meta_value')->nullable();
             $table->softDeletes();
-            $table->string('verified_at')->default('')->nullable();
+            $table->timestamp('verified_at')->nullable();
             $table->boolean('is_active')->default(True);
             $table->json('show');
             $table->string('delete_type')->default('none'); // onDeleteCascade - User Delete - Admin Delete - System Delete
             $table->longText('meta_note')->default('')->nullable();
 
             $table->timestamps();
+            
 
-            $table->unique(['user_id', 'meta_key']); // هر key فقط یکبار برای هر کاربر
+            // هر key فقط یکبار برای هر کاربر
         });
 
 

@@ -1,5 +1,5 @@
-<x-realestate::layouts.master>
-    <h1>Hello World</h1>
-
-    <p>Module: {!! config('realestate.name') !!}</p>
-</x-realestate::layouts.master>
+<x-layouts.app :title="__('Dashboard')">
+    <h2>مدیریت املاک</h2>
+    @livewire('realestate::real-estate-form')
+    @livewire('realestate::real-estate-list')
+</x-layouts.app>

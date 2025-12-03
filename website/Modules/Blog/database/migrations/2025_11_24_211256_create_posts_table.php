@@ -40,6 +40,8 @@ return new class extends Migration
             // Customization
             $table->text("custom_css")->nullable();
             $table->text("custom_js")->nullable();
+            $table->timestamp('verified_at')->nullable();
+
 
             // دسته‌بندی و برچسب‌ها
             $table->string("keyword")->nullable();
@@ -47,6 +49,7 @@ return new class extends Migration
             $table->string("tags")->nullable(); // می‌تونی رشته comma-separated ذخیره کنی
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

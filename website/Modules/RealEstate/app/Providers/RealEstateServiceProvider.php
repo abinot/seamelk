@@ -7,6 +7,10 @@ use Illuminate\Support\ServiceProvider;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use Livewire\Livewire;
+use Modules\RealEstate\Livewire\RealEstateForm;
+use Modules\RealEstate\Livewire\RealEstateList;
+
 
 class RealEstateServiceProvider extends ServiceProvider
 {
@@ -27,6 +31,8 @@ class RealEstateServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+        Livewire::component('realestate::real‑estate-form', RealEstateForm::class);
+        Livewire::component('realestate::real‑estate-list', RealEstateList::class);
     }
 
     /**
